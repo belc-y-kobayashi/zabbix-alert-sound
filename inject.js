@@ -1,16 +1,26 @@
 var alertSound = document.getElementById("zabbix-error-sound");
 
 function checkStatus() {
-  const targetWidget = [...document.getElementsByClassName("dashboard-grid-widget-container")].filter(
-    (w) => w.querySelector(".dashboard-grid-widget-head").innerText === "障害"
-  )[0];
+  const widgets = [...document.getElementsByClassName("dashboard-grid-widget-container")];
+  const targetWidget = widgets.filter((w) => w.querySelector(".dashboard-grid-widget-head").innerText === "障害")[0];
   if (!targetWidget) return true;
-  const targetColumnIndex = [...targetWidget.querySelector("thead tr").children].findIndex(
-    (n) => n.textContent === "確認済"
-  );
-  if (targetColumnIndex === -1) return true;
+  const columns = [...targetWidget.querySelector("thead tr").children];
+  const severityIndex = columns.findIndex((n) => n.textContent === "障害 • 深刻度");
+  const confirmedIndex = columns.findIndex((n) => n.textContent === "確認済");
+  if (severityIndex === -1 || confirmedIndex === -1) return true;
   const rows = [...targetWidget.querySelectorAll("tbody tr")];
-  if (rows.some((row) => row.children[targetColumnIndex].textContent === "いいえ")) return true;
+
+  // 深刻度が情報/未分類以外かつ未確認の障害がある場合にアラートを鳴らす
+  if (
+    rows.some(
+      (row) =>
+        !(
+          row.children[severityIndex].classList.contains("info-bg") ||
+          row.children[severityIndex].classList.contains("na-bg")
+        ) && row.children[confirmedIndex].textContent === "いいえ"
+    )
+  )
+    return true;
   else return false;
 }
 
